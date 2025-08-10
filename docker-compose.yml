@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+  banking-service:
+    image: paulocvvieira/banking-service:v1
+    container_name: banking-service-container
+    environment:
+      - QUARKUS_CLIENT_HTTP=172.17.0.1
+      - QUARKUS_CLIENT_HTTP_PORT=8181
+      - QUARKUS_DATASOURCE_USERNAME=paulo
+      - QUARKUS_DATASOURCE_PASSWORD=paulo
+      - QUARKUS_DATASOURCE_HOST=postgres-db-alura-banking-service
+      - QUARKUS_DATASOURCE_PORT=5432
+    ports:
+      - 8080:8080
+    depends_on:      
+      postgres-db-alura-banking-service:
+        condition: service_healthy
   postgres-db-alura-banking-service:
     image: postgres:14
     container_name: postgres-db-alura-banking-service-container
@@ -11,4 +26,13 @@ services:
     ports:
       - "5433:5432"
     volumes:
+      - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paulo -d agencia"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+volumes:
+  postgres_data:
+    driver: local
